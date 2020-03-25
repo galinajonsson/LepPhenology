@@ -1,0 +1,67 @@
+---
+title: "01-SpecimenData"
+author: "Galina M. Jönsson"
+date: "25/03/2020"
+output: html_document
+---
+
+Read all NHM specimen data with error radius <10 km and day-level record precision
+```{r setup, include=FALSE}
+NHMdat <- read.csv("../data/cleanNHMdat/nhm_all_clean_specimens.csv")
+
+# Find records per species
+require(dplyr)
+SpecimepnPerSpp <- NHMdat %>% group_by(species) %>% tally()
+SpecimepnPerSpp
+
+# Find the julan day for collection dates
+NHMdat$date <- as.Date(NHMdat$date, "%Y-%m-%d")
+NHMdat$jDate <- format(NHMdat$date, "%j")
+NHMdat$jDate <- as.numeric(NHMdat$jDate)
+
+require(dplyr)
+temp <- NHMdat %>% group_by(species, jDate) %>% summarise()
+temp <- NHMdat %>% group_by(species) %>% mean()
+
+apply()
+
+### loop through species and find mean and standard deviation for jDate across years
+# Create species names vecor
+spp <- as.vector(levels(NHMdat$species))
+
+# Create dataframe to populate
+jDateSummary <- data.frame(species = as.factor(spp),
+                              mean_jDate = as.numeric(NA),
+                              SD_jDate = as.numeric(NA))
+
+for(i in 1:length(spp)){
+  X <- split(NHMdat, NHMdat$species)
+  temp <- X[[i]]
+  
+  jDateSummary[i,2] <- mean(temp$jDate)
+  jDateSummary[i,3] <- sd(temp$jDate)
+}
+jDateSummary$ThreeSD_jDate <- jDateSummary$SD_jDate*3
+
+jDateSummary
+```
+
+
+```{r temporal-spread-raw}
+require(ggplot2)
+p <- ggplot((NHMdat %>%
+    group_by(species, year) %>%
+    tally()), aes(year, n)) + geom_point() +
+    facet_grid(rows = vars(species))
+p
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
