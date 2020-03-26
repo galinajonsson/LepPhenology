@@ -19,11 +19,6 @@ NHMdat$date <- as.Date(NHMdat$date, "%Y-%m-%d")
 NHMdat$jDate <- format(NHMdat$date, "%j")
 NHMdat$jDate <- as.numeric(NHMdat$jDate)
 
-require(dplyr)
-temp <- NHMdat %>% group_by(species, jDate) %>% summarise()
-temp <- NHMdat %>% group_by(species) %>% mean()
-
-apply()
 
 ### loop through species and find mean and standard deviation for jDate across years
 # Create species names vecor
@@ -37,6 +32,26 @@ jDateSummary <- data.frame(species = as.factor(spp),
 for(i in 1:length(spp)){
   X <- split(NHMdat, NHMdat$species)
   temp <- X[[i]]
+  
+  jDateSummary[i,2] <- mean(temp$jDate)
+  jDateSummary[i,3] <- sd(temp$jDate)
+}
+jDateSummary$ThreeSD_jDate <- jDateSummary$SD_jDate*3
+
+
+
+### loop through species and find remove specimens collected more or less than three standard deviations from mean jDate across years
+spp <- as.vector(levels(NHMdat$species))
+
+# Plit NMdat into multiple dataframes, one per species
+NHMdatSplit <- split(NHMdat, NHMdat$species)
+
+# loop through
+for(i in 1:length(spp)){
+  temp <- NHMdatSplit[[i]]
+  for(j in 1:nrow(temp))
+    temp$jDate[j,]
+  if(temp$jDate[j,] < (jDateSummary))
   
   jDateSummary[i,2] <- mean(temp$jDate)
   jDateSummary[i,3] <- sd(temp$jDate)
