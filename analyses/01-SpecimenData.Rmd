@@ -36,29 +36,12 @@ for(i in 1:length(spp)){
   jDateSummary[i,2] <- mean(temp$jDate)
   jDateSummary[i,3] <- sd(temp$jDate)
 }
-jDateSummary$ThreeSD_jDate <- jDateSummary$SD_jDate*3
+jDateSummary$Min_jDate <- jDateSummary$mean_jDate - 3*jDateSummary$SD_jDate
+jDateSummary$Max_jDate <- jDateSummary$mean_jDate + 3*jDateSummary$SD_jDate
 
-
-
-### loop through species and find remove specimens collected more or less than three standard deviations from mean jDate across years
-spp <- as.vector(levels(NHMdat$species))
-
-# Plit NMdat into multiple dataframes, one per species
 NHMdatSplit <- split(NHMdat, NHMdat$species)
+NHMdatSplit$`Aglais io`$jDate
 
-# loop through
-for(i in 1:length(spp)){
-  temp <- NHMdatSplit[[i]]
-  for(j in 1:nrow(temp))
-    temp$jDate[j,]
-  if(temp$jDate[j,] < (jDateSummary))
-  
-  jDateSummary[i,2] <- mean(temp$jDate)
-  jDateSummary[i,3] <- sd(temp$jDate)
-}
-jDateSummary$ThreeSD_jDate <- jDateSummary$SD_jDate*3
-
-jDateSummary
 ```
 
 
