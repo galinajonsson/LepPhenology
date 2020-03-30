@@ -8,39 +8,44 @@ output: html_document
 ```{r temp-data, echo=FALSE}
 library(ncdf4)
 
-nc_data <- nc_open('../data/tas_hadukgrid_uk_5km_mon_190001-190012.nc')
-
-print(nc_data)
-
-
-yCoord <- ncvar_get(nc_data,"projection_y_coordinate")
-nyCoord <- dim(yCoord)
-head(yCoord)
-
-
-xCoord <- ncvar_get(nc_data,"projection_x_coordinate")
-nxCoord <- dim(xCoord)
-head(xCoord)
-
-print(c(nyCoord,nxCoord))
+nc_data <- nc_open('../data/tas_hadukgrid_12km_mon/tas_hadukgrid_uk_12km_mon_190001-190012.nc')
 
 
 # get time
 time <- ncvar_get(nc_data,"time")
-time
 
 tunits <- ncatt_get(nc_data,"time","units")
 nt <- dim(time)
-nt
 
-tunits
-
-dname <- "tas"  # note: tmp means temperature (not temporary)
+dname <- "tas"
 tmp_array <- ncvar_get(nc_data,dname)
 dlname <- ncatt_get(nc_data,dname,"long_name")
 dunits <- ncatt_get(nc_data,dname,"units")
 fillvalue <- ncatt_get(nc_data,dname,"_FillValue")
-dim(tmp_array)
+
+
+
+##########################################
+#        double latitude[projection_x_coordinate,projection_y_coordinate]   (Contiguous storage)  
+#            units: degrees_north
+#            standard_name: latitude
+#        double longitude[projection_x_coordinate,projection_y_coordinate]   (Contiguous storage)  
+#            units: degrees_east
+#            standard_name: longitude
+
+latname <- "latitude"
+lat_array <- ncvar_get(nc_data,latname)
+latname <- ncatt_get(nc_data,latname,"standard_name")
+
+longname <- "longitude"
+long_array <- ncvar_get(nc_data,longname)
+longname <- ncatt_get(nc_data,longname,"standard_name")
+
+long_list <- as.list(long_array)
+lat_list <- as.list(lat_array)
+
+##########################################
+
 
 
 # get global attributes
@@ -67,17 +72,16 @@ tmp_array[tmp_array==fillvalue$value] <- NA
 
 length(na.omit(as.vector(tmp_array[,,1])))
 
+
+# create dataframe -- reshape data
+# matrix (nlon*nlat rows by 2 cols) of lons and lats
+lonlat <- as.matrix(cbind(long_list, lat_list))
+
 # get a single slice or layer (January)
 m <- 1
 tmp_slice <- tmp_array[,,m]
 
 tmp_slice
-
-
-# create dataframe -- reshape data
-# matrix (nlon*nlat rows by 2 cols) of lons and lats
-lonlat <- as.matrix(expand.grid(yCoord,xCoord))
-dim(lonlat)
 
 tmp_vec <- as.vector(tmp_slice)
 length(tmp_vec)
@@ -85,11 +89,59 @@ length(tmp_vec)
 
 # create dataframe and add names
 tmp_df01 <- data.frame(cbind(lonlat,tmp_vec))
-names(tmp_df01) <- c("yCoord","xCoord",paste(dname,as.character(m), sep="_"))
+names(tmp_df01) <- c("xCoord","yCoord",paste(dname,as.character(m), sep="_"))
 head(na.omit(tmp_df01), 10)
 
 
-unique(tmp_df01$tas_1)
+#### Fing grid refrences
+require(BRCmap)
+tmp_df01$km10grid <- gps_latlon2gr(as.numeric(tmp_df01$yCoord), as.numeric(tmp_df01$xCoord), out_projection = "OSGB", return_type = "gr")
+tmp_df01$km10grid <- reformat_gr(tmp_df01$km10grid, prec_out = 10000, precision = NULL, pad_gr = FALSE)
+
+# Unlist yCoord, xCoord and tas
+tmp_df01$yCoord <- unlist(tmp_df01$yCoord)
+tmp_df01$xCoord <- unlist(tmp_df01$xCoord)
+tmp_df01$tas_1 <- unlist(tmp_df01$tas_1)
+
+# Remove empty data
+tmp_df01 <- tmp_df01[complete.cases(tmp_df01), ]
+
+tas1900 <- tmp_df01[,3:4] # 1708
+
+
+for(m in 2:12){
+  # get a single slice or layer
+  tmp_slice <- tmp_array[,,m]
+  
+  tmp_vec <- as.vector(tmp_slice)
+  
+  # create dataframe and add names
+  tmp_df <- data.frame(cbind(lonlat,tmp_vec))
+  names(tmp_df) <- c("xCoord","yCoord",
+                       paste(dname,as.character(m), sep="_"))
+
+
+#### Fing grid refrences
+require(BRCmap)
+tmp_df$km10grid <- gps_latlon2gr(as.numeric(tmp_df$yCoord), as.numeric(tmp_df$xCoord), out_projection = "OSGB", return_type = "gr")
+tmp_df$km10grid <- reformat_gr(tmp_df$km10grid, prec_out = 10000, precision = NULL, pad_gr = FALSE)
+
+# Unlist yCoord, xCoord and tas
+tmp_df$yCoord <- unlist(tmp_df$yCoord)
+tmp_df$xCoord <- unlist(tmp_df$xCoord)
+tmp_df[,3] <- unlist(tmp_df[,3])
+
+# Remove empty data
+tmp_df <- tmp_df[,3:4]
+
+tmp_df <- tmp_df[complete.cases(tmp_df), ]
+
+tas1900 <- merge(tas1900, tmp_df, by ="km10grid")
+  
+}
+
+write.csv(tas1900, )
+
 ```
 
 

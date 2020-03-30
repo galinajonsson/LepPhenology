@@ -17,6 +17,8 @@
 *NMRS_species(1).txt
 *NMRS_data(1).txt
 *NMRS_species(2).txt
+*.zip
+*.nc
 
 
 # Ignore word files
