@@ -9,15 +9,12 @@ Read all NHM specimen data with error radius <10 km and day-level record precisi
 ```{r setup, include=FALSE}
 NHMdat <- read.csv("../data/cleanNHMdat/nhm_all_clean_specimens.csv")
 
-# Find records per species
-require(dplyr)
-SpecimepnPerSpp <- NHMdat %>% group_by(species) %>% tally()
-SpecimepnPerSpp
-
 # Find the julan day for collection dates
 NHMdat$date <- as.Date(NHMdat$date, "%Y-%m-%d")
 NHMdat$jDate <- format(NHMdat$date, "%j")
 NHMdat$jDate <- as.numeric(NHMdat$jDate)
+
+# Remove any 
 
 
 ### loop through species and find mean and standard deviation for jDate across years
@@ -39,27 +36,166 @@ for(i in 1:length(spp)){
 jDateSummary$Min_jDate <- jDateSummary$mean_jDate - 3*jDateSummary$SD_jDate
 jDateSummary$Max_jDate <- jDateSummary$mean_jDate + 3*jDateSummary$SD_jDate
 
+
+### Loop though each species and remove all specimens more than 3 standard deviation form mean jDate
+
+# Split the dat frame into one dtaframe per species 
 NHMdatSplit <- split(NHMdat, NHMdat$species)
-NHMdatSplit$`Aglais io`$jDate
+
+for(i in 1:length(NHMdatSplit)){
+  NHMdatSplit[[i]] <- NHMdatSplit[[i]][(NHMdatSplit[[i]]$jDate < jDateSummary[i,"Max_jDate"]),]
+  NHMdatSplit[[i]] <- NHMdatSplit[[i]][(NHMdatSplit[[i]]$jDate > jDateSummary[i,"Min_jDate"]),]
+}
+
+
+### Loop though each species, find the numebr of records per year and merge this data with as a separate column
+
+# Split the dat frame into one dtaframe per species 
+NHMdatSplit <- split(NHMdat, NHMdat$species)
+
+for(i in 1:length(NHMdatSplit)){
+  require(dplyr)
+  SpecimepnPerSpp <- NHMdatSplit[[i]] %>% group_by(year) %>% tally()
+  NHMdatSplit[[i]] <- merge(NHMdatSplit[[i]], SpecimepnPerSpp, by="year", all.x = TRUE)
+  NHMdatSplit[[i]] <- NHMdatSplit[[i]][(NHMdatSplit[[i]]$n > 4),]
+}
+
+# Combine into one data frame
+NHMclean <- bind_rows(NHMdatSplit, .id = "column_label")
+
+# Find records per species
+require(dplyr)
+SpecimepnPerSpp <- NHMclean %>% group_by(species) %>% tally()
+SpecimepnPerSpp
+```
+
+### Univoltine species
+First, I will subset the univoltine species (designation according to Dennis et al., 2017; http://dx.doi.org/10.1016/j.ecolind.2017.01.009)
+
+The univoltine species are:
+- Erynnis tages  
+- Thymelicus lineola  
+- Pyronia tithonus  
+- Callophrys rubi  
+- Pyrgus malvae  
+- Ochlodes sylvanus  
+- Melanargia galathea  
+- Maniola jurtina  
+- Anthocharis cardamines  
+- Favonius quercus  
+- Aphantopus hyperantus  
+- Thymelicus sylvestris  
+
+
+
+```{r temporal-spread-raw}
+uniVolSpp <- c("Erynnis tages", "Thymelicus lineola", "Pyronia tithonus", "Callophrys rubi", "Pyrgus malvae", "Ochlodes sylvanus", "Melanargia galathea", "Maniola jurtina", "Anthocharis cardamines", "Favonius quercus", "Aphantopus hyperantus", "Thymelicus sylvestris")
+length(uniVolSpp)
+
+NHMcleanUniVol <- subset(NHMclean, species %in% uniVolSpp)
+NHMcleanUniVol <- droplevels(NHMcleanUniVol)
+
+for(i in 1:length(uniVolSpp)){
+  hist((subset(NHMcleanUniVol, species == uniVolSpp[i]))$jDate, xlab = "Julian day", ylab = "Specimen records", main = uniVolSpp[i])
+}
+
+# Find records per species
+require(dplyr)
+SpecimepnPerSpp <- NHMcleanUniVol %>% group_by(species) %>% tally()
+SpecimepnPerSpp
+
+#######################################################################
+############################ Erynnis tages ############################
+#######################################################################
+
+Erynnis_tages <- subset(NHMcleanUniVol, species == "Erynnis tages")
+
+## Map records
+require(BRCmap)
+#Load UK data
+data(UK)
+
+# Plot UK outline
+plot_GIS(UK, new.window = FALSE)
+  
+# Add these grid references to an exisiting plot
+plotUK_gr(Erynnis_tages$km10grid, col="red")
+
+Erynnis_tagesYearly <- data.frame(year = as.factor(unique(Erynnis_tages$year)),
+                                  qunatile10 = as.numeric(NA),
+                                  qunatile90 = as.numeric(NA),
+                                  median = as.numeric(NA),
+                                  earlies = as.numeric(NA),
+                                  CollectionPeriod = as.numeric(NA))
+
+for(i in 1:length(unique(Erynnis_tages$year))){
+  temp <- subset(Erynnis_tages, year == (unique(Erynnis_tages$year)[i]))
+  Erynnis_tagesYearly[i,2] <- quantile((temp$jDate), 0.10)
+  Erynnis_tagesYearly[i,3] <- quantile((temp$jDate), 0.90)  
+  Erynnis_tagesYearly[i,4] <- median(temp$jDate) 
+  Erynnis_tagesYearly[i,5] <- min(temp$jDate) 
+  Erynnis_tagesYearly[i,6] <- Erynnis_tagesYearly[i,3] - Erynnis_tagesYearly[i,2]
+}
+
+library("raster")
+r = stack("/Users/galinajonsson/Downloads/tas_hadukgrid_uk_5km_mon_190001-190012.nc")
+
+test <- as.data.frame(r, row.names=NULL, optional=TRUE, xy=TRUE, 
+              na.rm=FALSE)
+                                  
+                                  
+
+
+#######################################################################
+########################### Maniola jurtina ###########################
+#######################################################################
+
+Maniola_jurtina <- subset(NHMcleanUniVol, species == "Maniola jurtina")
+
+# Plot UK outline
+plot_GIS(UK, new.window = FALSE)
+# Add these grid references to an exisiting plot
+plotUK_gr(Maniola_jurtina$km10grid, col="red")
+
+Maniola_jurtinaYearly <- data.frame(year = as.factor(unique(Maniola_jurtina$year)),
+                                  qunatile10 = as.numeric(NA),
+                                  qunatile90 = as.numeric(NA),
+                                  median = as.numeric(NA),
+                                  earlies = as.numeric(NA),
+                                  CollectionPeriod = as.numeric(NA))
+
+for(i in 1:length(unique(Maniola_jurtina$year))){
+  temp <- subset(Maniola_jurtina, year == (unique(Maniola_jurtina$year)[i]))
+  Maniola_jurtinaYearly[i,2] <- quantile((temp$jDate), 0.10)
+  Maniola_jurtinaYearly[i,3] <- quantile((temp$jDate), 0.90)  
+  Maniola_jurtinaYearly[i,4] <- median(temp$jDate) 
+  Maniola_jurtinaYearly[i,5] <- min(temp$jDate) 
+  Maniola_jurtinaYearly[i,6] <- Erynnis_tagesYearly[i,3] - Erynnis_tagesYearly[i,2]
+}
+
+
+
+
+
+
+
+
+
 
 ```
 
 
+
+The relationship between spring temperatures (March–May) and earliest, median, 10th percentile, and 90th percentile collection date, length of collection period (range of 10th to 90th percentiles) and all data in a particular year,
 ```{r temporal-spread-raw}
 require(ggplot2)
-p <- ggplot((NHMdat %>%
+p <- ggplot((NHMcleanUniVol %>%
     group_by(species, year) %>%
     tally()), aes(year, n)) + geom_point() +
     facet_grid(rows = vars(species))
 p
+
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
