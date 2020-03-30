@@ -1,5 +1,4 @@
-# Function to summarise whether or not all occupancy estimates throughout the time series have converged (based on Rhat-values) for many .rds files in an input directory
-# This function reads in and summarises all the .rds files' Rhat values (all values below 1.1 or not) for the occupancy estimates
+# Function to summarises monthly average temperature per 12 km UK grid cells from 1900 to 2017. As each yearly data comes as an indiviudal .nc file, this function summarises all such files in a given input directory
 summarise_nc_tas <-  function(input_dir, verbose = TRUE) {
 
   library(reshape2)

@@ -108,7 +108,8 @@ SpecimepnPerSpp
 ############################ Erynnis tages ############################
 #######################################################################
 
-Erynnis_tages <- subset(NHMcleanUniVol, species == "Erynnis tages")
+Erynnis_tages <- subset(NHMcleanUniVol, species == "Erynnis tages") # 511 obs
+Erynnis_tages$year <- as.factor(as.character(Erynnis_tages$year))
 
 ## Map records
 require(BRCmap)
@@ -137,12 +138,9 @@ for(i in 1:length(unique(Erynnis_tages$year))){
   Erynnis_tagesYearly[i,6] <- Erynnis_tagesYearly[i,3] - Erynnis_tagesYearly[i,2]
 }
 
-library("raster")
-r = stack("/Users/galinajonsson/Downloads/tas_hadukgrid_uk_5km_mon_190001-190012.nc")
 
-test <- as.data.frame(r, row.names=NULL, optional=TRUE, xy=TRUE, 
-              na.rm=FALSE)
-                                  
+# Merge Erynnis_tagesYearly with the Erynnis_tages by year
+Erynnis_tages <- merge(Erynnis_tages, Erynnis_tagesYearly, by="year", all.x=TRUE)
                                   
 
 
@@ -151,6 +149,7 @@ test <- as.data.frame(r, row.names=NULL, optional=TRUE, xy=TRUE,
 #######################################################################
 
 Maniola_jurtina <- subset(NHMcleanUniVol, species == "Maniola jurtina")
+Maniola_jurtina$year <- as.factor(as.character(Maniola_jurtina$year))
 
 # Plot UK outline
 plot_GIS(UK, new.window = FALSE)
@@ -173,7 +172,8 @@ for(i in 1:length(unique(Maniola_jurtina$year))){
   Maniola_jurtinaYearly[i,6] <- Erynnis_tagesYearly[i,3] - Erynnis_tagesYearly[i,2]
 }
 
-
+# Merge Maniola_jurtinaYearly with the Maniola_jurtina by year
+Maniola_jurtina <- merge(Maniola_jurtina, Maniola_jurtinaYearly, by="year", all.x=TRUE)
 
 
 
