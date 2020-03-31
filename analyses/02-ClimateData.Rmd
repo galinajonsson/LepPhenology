@@ -10,10 +10,40 @@ output: html_document
 source("../analyses/function-summarise_nc_tas.R")
 
 # Summarise all .nc files 
-tas_summary <- summarise_nc_tas('../data/tas_hadukgrid_12km_mon')
+#tas_summary <- summarise_nc_tas('../data/tas_hadukgrid_12km_mon')
+
+# Save file
+#write.csv(tas_summary, "../outputs/climate/tas_summary.csv")
+
+tas_summary <- read.csv("../outputs/climate/tas_summary.csv")
 ```
 
+### Maniola jurtina
+```{r tas-data, echo=FALSE}
+Maniola_jurtina$CollectionPeriod <- Maniola_jurtina$percentile90 - Maniola_jurtina$percentile10
+View(Maniola_jurtina)
 
 
+# Read mean monthly temperature file
+tas_summary <- read.csv("../outputs/climate/tas_summary.csv")
+
+years <- unique(Maniola_jurtina$year)
+
+for(i in 1:length(years)){ # for each unique year
+  
+  for(j in 1:nrow(Maniola_jurtina)){ # Go through each row
+    
+    if(Maniola_jurtina[j, "year"] == years[i]){ # If the year is the one specified by i
+      
+      merge()
+    
+  }
+  
+    
+  }
+  
+}
+
+```
 
 

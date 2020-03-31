@@ -26,8 +26,9 @@ The analyses code is divided into .Rmd files that run the analyses for each sect
 
 Note that throughout I've commented out `write.csv` and `saveRDS` commands in order to not clog up your machine. For code chunks that run the models, I've set `eval` to FALSE, again, to not clog up your machine as the analyses are computationally expensive and were run on high performance machines.
 
-* __01-SpecimenData.Rdm__ summarises the NHM specimen data. For each speies used in analyses, I summarise the annual 10th and 19th percentile of julian record days, the range of annual records days and the first annual record Julian day.
-* __02-ClimateData.Rdm__ summarises the HadUK-Grid dataset's relevant climatic variables.
+* __01-SpecimenData.Rdm__ summarises the NHM specimen data for eleven univoltine British butterfly species. For each speies used in analyses, I summarise the annual 10th and 19th percentile of julian record days, the range of annual records days and the first annual record day Julian day.
+* __02-ClimateData.Rdm__ summarises the HadUK-Grid dataset's relevant climatic variables and **WILL SUMMARISE RELEVANT CLIMATIC VARIABLES PER RECORD FOR ALL ELEVEN SPECIES**
+* __03-Analyses.Rdm__ **WILL ANALYSE PHENOLOGY CHNAGE AND EFFECTS OF CLIMATIC VARIABLES ON PHENOLOGY AMONG THE ELEVEN SPECIES**
 
 
 

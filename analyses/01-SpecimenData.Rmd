@@ -70,10 +70,9 @@ SpecimepnPerSpp
 ```
 
 ### Univoltine species
-First, I will subset the univoltine species (designation according to Dennis et al., 2017; http://dx.doi.org/10.1016/j.ecolind.2017.01.009)
+First, I will subset the univoltine species (designation according to Dennis et al., 2017; http://dx.doi.org/10.1016/j.ecolind.2017.01.009; disregarding Erynnis tages, which is known to be bivoltine in the UK, this is also apparent from histograms)
 
 The univoltine species are:
-- Erynnis tages  
 - Thymelicus lineola  
 - Pyronia tithonus  
 - Callophrys rubi  
@@ -89,10 +88,11 @@ The univoltine species are:
 
 
 ```{r temporal-spread-raw}
-uniVolSpp <- c("Erynnis tages", "Thymelicus lineola", "Pyronia tithonus", "Callophrys rubi", "Pyrgus malvae", "Ochlodes sylvanus", "Melanargia galathea", "Maniola jurtina", "Anthocharis cardamines", "Favonius quercus", "Aphantopus hyperantus", "Thymelicus sylvestris")
+uniVolSpp <- c("Thymelicus lineola", "Pyronia tithonus", "Callophrys rubi", "Pyrgus malvae", "Ochlodes sylvanus", "Melanargia galathea", "Maniola jurtina", "Anthocharis cardamines", "Favonius quercus", "Aphantopus hyperantus", "Thymelicus sylvestris")
 length(uniVolSpp)
 
 NHMcleanUniVol <- subset(NHMclean, species %in% uniVolSpp)
+NHMcleanUniVol <- subset(NHMcleanUniVol, year < 1970)
 NHMcleanUniVol <- droplevels(NHMcleanUniVol)
 
 for(i in 1:length(uniVolSpp)){
@@ -104,10 +104,511 @@ require(dplyr)
 SpecimepnPerSpp <- NHMcleanUniVol %>% group_by(species) %>% tally()
 SpecimepnPerSpp
 
-#######################################################################
-############################ Erynnis tages ############################
-#######################################################################
+```
 
+
+
+
+
+#### Maniola jurtina (Meadow brown)
+```{r maniola-jurtina}
+Maniola_jurtina <- subset(NHMcleanUniVol, species == "Maniola jurtina")
+Maniola_jurtina$year <- as.factor(as.character(Maniola_jurtina$year))
+
+# I will remove four obviou outlier records (February 1947, Feb 1948, Feb 1952 and March 1922)
+Maniola_jurtina <- subset(Maniola_jurtina, month > 3)
+
+# Plot UK outline
+plot_GIS(UK, new.window = FALSE)
+# Add these grid references to an exisiting plot
+plotUK_gr(Maniola_jurtina$km10grid, col="red")
+
+Maniola_jurtinaYearly <- data.frame(year = as.factor(unique(Maniola_jurtina$year)),
+                                  percentile10 = as.numeric(NA),
+                                  percentile90 = as.numeric(NA),
+                                  median = as.numeric(NA),
+                                  earliest = as.numeric(NA),
+                                  CollectionPeriod = as.numeric(NA))
+
+for(i in 1:length(unique(Maniola_jurtina$year))){
+  temp <- subset(Maniola_jurtina, year == (unique(Maniola_jurtina$year)[i]))
+  Maniola_jurtinaYearly[i,2] <- quantile((temp$jDate), 0.10)
+  Maniola_jurtinaYearly[i,3] <- quantile((temp$jDate), 0.90)  
+  Maniola_jurtinaYearly[i,4] <- median(temp$jDate) 
+  Maniola_jurtinaYearly[i,5] <- min(temp$jDate) 
+  Maniola_jurtinaYearly[i,6] <- Erynnis_tagesYearly[i,3] - Erynnis_tagesYearly[i,2]
+}
+
+# Merge Maniola_jurtinaYearly with the Maniola_jurtina by year
+Maniola_jurtina <- merge(Maniola_jurtina, Maniola_jurtinaYearly, by="year", all.x=TRUE)
+
+hist(Maniola_jurtina$jDate, xlab = "Julian day", ylab = "Specimen records", main = "Maniola jurtina")
+
+Maniola_jurtinaYearly$year <- as.numeric(as.character(Maniola_jurtinaYearly$year))
+
+require(ggplot2)
+ggplot(Maniola_jurtinaYearly, aes(x=year, y=percentile10)) +
+  geom_point() + 
+  geom_smooth(method=lm)
+```
+
+#### Pyronia tithonus (Gatekeeper)
+```{r pyronia-tithonus}
+Pyronia_tithonus <- subset(NHMcleanUniVol, species == "Pyronia tithonus")
+Pyronia_tithonus$year <- as.factor(as.character(Pyronia_tithonus$year))
+
+# I will remove five obvious outlier records (January 1942, Two records from April 1928, two records from November 1902)
+Pyronia_tithonus <- subset(Pyronia_tithonus, month > 4)
+Pyronia_tithonus <- subset(Pyronia_tithonus, month < 11)
+
+# Plot UK outline
+plot_GIS(UK, new.window = FALSE)
+# Add these grid references to an exisiting plot
+plotUK_gr(Pyronia_tithonus$km10grid, col="red")
+
+Pyronia_tithonusYearly <- data.frame(year = as.factor(unique(Pyronia_tithonus$year)),
+                                  percentile10 = as.numeric(NA),
+                                  percentile90 = as.numeric(NA),
+                                  median = as.numeric(NA),
+                                  earliest = as.numeric(NA),
+                                  CollectionPeriod = as.numeric(NA))
+
+for(i in 1:length(unique(Pyronia_tithonus$year))){
+  temp <- subset(Pyronia_tithonus, year == (unique(Pyronia_tithonus$year)[i]))
+  Pyronia_tithonusYearly[i,2] <- quantile((temp$jDate), 0.10)
+  Pyronia_tithonusYearly[i,3] <- quantile((temp$jDate), 0.90)  
+  Pyronia_tithonusYearly[i,4] <- median(temp$jDate) 
+  Pyronia_tithonusYearly[i,5] <- min(temp$jDate) 
+  Pyronia_tithonusYearly[i,6] <- Pyronia_tithonusYearly[i,3] - Pyronia_tithonusYearly[i,2]
+}
+
+# Merge Pyronia_tithonusYearly with the Pyronia_tithonus by year
+Pyronia_tithonus <- merge(Pyronia_tithonus, Pyronia_tithonusYearly, by="year", all.x=TRUE)
+
+
+
+Pyronia_tithonusYearly$year <- as.numeric(as.character(Pyronia_tithonusYearly$year))
+
+hist(Pyronia_tithonus$jDate, xlab = "Julian day", ylab = "Specimen records", main = "Pyronia tithonus")
+
+require(ggplot2)
+ggplot(Pyronia_tithonusYearly, aes(x=year, y=percentile10)) +
+  geom_point() + 
+  geom_smooth(method=lm)
+```
+
+
+
+#### Callophrys rubi (Green hairstreak)
+```{r Callophrys-rubi}
+
+Callophrys_rubi <- subset(NHMcleanUniVol, species == "Callophrys rubi")
+Callophrys_rubi$year <- as.factor(as.character(Callophrys_rubi$year))
+
+# I will remove all 1913 records (15 records in total), which are obvious outliers as most dates are February or March and if these are removed there are not enogh (five or more) sensical records
+Callophrys_rubi <- subset(Callophrys_rubi, !year == "1913")
+
+# Plot UK outline
+plot_GIS(UK, new.window = FALSE)
+# Add these grid references to an exisiting plot
+plotUK_gr(Callophrys_rubi$km10grid, col="red")
+
+Callophrys_rubiYearly <- data.frame(year = as.factor(unique(Callophrys_rubi$year)),
+                                  percentile10 = as.numeric(NA),
+                                  percentile90 = as.numeric(NA),
+                                  median = as.numeric(NA),
+                                  earliest = as.numeric(NA),
+                                  CollectionPeriod = as.numeric(NA))
+
+for(i in 1:length(unique(Callophrys_rubi$year))){
+  temp <- subset(Callophrys_rubi, year == (unique(Callophrys_rubi$year)[i]))
+  Callophrys_rubiYearly[i,2] <- quantile((temp$jDate), 0.10)
+  Callophrys_rubiYearly[i,3] <- quantile((temp$jDate), 0.90)  
+  Callophrys_rubiYearly[i,4] <- median(temp$jDate) 
+  Callophrys_rubiYearly[i,5] <- min(temp$jDate) 
+  Callophrys_rubiYearly[i,6] <- Callophrys_rubiYearly[i,3] - Callophrys_rubiYearly[i,2]
+}
+
+# Merge Callophrys_rubiYearly with the Callophrys_rubi by year
+Callophrys_rubi <- merge(Callophrys_rubi, Callophrys_rubiYearly, by="year", all.x=TRUE)
+
+hist(Callophrys_rubi$jDate, xlab = "Julian day", ylab = "Specimen records", main = "Callophrys rubi")
+
+Callophrys_rubiYearly$year <- as.numeric(as.character(Callophrys_rubiYearly$year))
+
+require(ggplot2)
+ggplot(Callophrys_rubiYearly, aes(x=year, y=percentile10)) +
+  geom_point() + 
+  geom_smooth(method=lm)
+
+```
+
+
+#### Pyrgus malvae (Grizzled skipper)
+```{r Pyrgus-malvae}
+Pyrgus_malvae <- subset(NHMcleanUniVol, species == "Pyrgus malvae")
+Pyrgus_malvae$year <- as.factor(as.character(Pyrgus_malvae$year))
+
+# I will remove all records belonging to the very rare second generation, all records with jdat > 210
+Pyrgus_malvae <- subset(Pyrgus_malvae, jDate < 210)
+
+# Plot UK outline
+plot_GIS(UK, new.window = FALSE)
+# Add these grid references to an exisiting plot
+plotUK_gr(Pyrgus_malvae$km10grid, col="red")
+
+Pyrgus_malvaeYearly <- data.frame(year = as.factor(unique(Pyrgus_malvae$year)),
+                                  percentile10 = as.numeric(NA),
+                                  percentile90 = as.numeric(NA),
+                                  median = as.numeric(NA),
+                                  earliest = as.numeric(NA),
+                                  CollectionPeriod = as.numeric(NA))
+
+for(i in 1:length(unique(Pyrgus_malvae$year))){
+  temp <- subset(Pyrgus_malvae, year == (unique(Pyrgus_malvae$year)[i]))
+  Pyrgus_malvaeYearly[i,2] <- quantile((temp$jDate), 0.10)
+  Pyrgus_malvaeYearly[i,3] <- quantile((temp$jDate), 0.90)  
+  Pyrgus_malvaeYearly[i,4] <- median(temp$jDate) 
+  Pyrgus_malvaeYearly[i,5] <- min(temp$jDate) 
+  Pyrgus_malvaeYearly[i,6] <- Pyrgus_malvaeYearly[i,3] - Pyrgus_malvaeYearly[i,2]
+}
+
+# Merge Pyrgus_malvaeYearly with the Pyrgus_malvae by year
+Pyrgus_malvae <- merge(Pyrgus_malvae, Pyrgus_malvaeYearly, by="year", all.x=TRUE)
+
+hist(Pyrgus_malvae$jDate, xlab = "Julian day", ylab = "Specimen records", main = "Pyrgus malvae")
+
+
+Pyrgus_malvaeYearly$year <- as.numeric(as.character(Pyrgus_malvaeYearly$year))
+
+
+require(ggplot2)
+ggplot(Pyrgus_malvaeYearly, aes(x=year, y=percentile10)) +
+  geom_point() + 
+  geom_smooth(method=lm)
+
+```
+
+
+
+#### Ochlodes sylvanus (Large skipper)
+```{r Ochlodes-sylvanus}
+Ochlodes_sylvanus <- subset(NHMcleanUniVol, species == "Ochlodes sylvanus")
+Ochlodes_sylvanus$year <- as.factor(as.character(Ochlodes_sylvanus$year))
+
+# Plot UK outline
+plot_GIS(UK, new.window = FALSE)
+# Add these grid references to an exisiting plot
+plotUK_gr(Ochlodes_sylvanus$km10grid, col="red")
+
+Ochlodes_sylvanusYearly <- data.frame(year = as.factor(unique(Ochlodes_sylvanus$year)),
+                                  percentile10 = as.numeric(NA),
+                                  percentile90 = as.numeric(NA),
+                                  median = as.numeric(NA),
+                                  earliest = as.numeric(NA),
+                                  CollectionPeriod = as.numeric(NA))
+
+for(i in 1:length(unique(Ochlodes_sylvanus$year))){
+  temp <- subset(Ochlodes_sylvanus, year == (unique(Ochlodes_sylvanus$year)[i]))
+  Ochlodes_sylvanusYearly[i,2] <- quantile((temp$jDate), 0.10)
+  Ochlodes_sylvanusYearly[i,3] <- quantile((temp$jDate), 0.90)  
+  Ochlodes_sylvanusYearly[i,4] <- median(temp$jDate) 
+  Ochlodes_sylvanusYearly[i,5] <- min(temp$jDate) 
+  Ochlodes_sylvanusYearly[i,6] <- Ochlodes_sylvanusYearly[i,3] - Ochlodes_sylvanusYearly[i,2]
+}
+
+# Merge Ochlodes_sylvanusYearly with the Ochlodes_sylvanus by year
+Ochlodes_sylvanus <- merge(Ochlodes_sylvanus, Ochlodes_sylvanusYearly, by="year", all.x=TRUE)
+
+hist(Ochlodes_sylvanus$jDate, xlab = "Julian day", ylab = "Specimen records", main = "Ochlodes sylvanus")
+
+
+Ochlodes_sylvanusYearly$year <- as.numeric(as.character(Ochlodes_sylvanusYearly$year))
+
+require(ggplot2)
+ggplot(Ochlodes_sylvanusYearly, aes(x=year, y=percentile10)) +
+  geom_point() + 
+  geom_smooth(method=lm)
+
+```
+
+
+
+#### Melanargia galathea (Marbled white)
+```{r Melanargia-galathea}
+Melanargia_galathea <- subset(NHMcleanUniVol, species == "Melanargia galathea")
+Melanargia_galathea$year <- as.factor(as.character(Melanargia_galathea$year))
+
+# I will remove two obvious outliers (February 1948 and October 1921)
+Melanargia_galathea <- subset(Melanargia_galathea, month < 10)
+Melanargia_galathea <- subset(Melanargia_galathea, month > 2)
+
+# Plot UK outline
+plot_GIS(UK, new.window = FALSE)
+# Add these grid references to an exisiting plot
+plotUK_gr(Melanargia_galathea$km10grid, col="red")
+
+Melanargia_galatheaYearly <- data.frame(year = as.factor(unique(Melanargia_galathea$year)),
+                                  percentile10 = as.numeric(NA),
+                                  percentile90 = as.numeric(NA),
+                                  median = as.numeric(NA),
+                                  earliest = as.numeric(NA),
+                                  CollectionPeriod = as.numeric(NA))
+
+for(i in 1:length(unique(Melanargia_galathea$year))){
+  temp <- subset(Melanargia_galathea, year == (unique(Melanargia_galathea$year)[i]))
+  Melanargia_galatheaYearly[i,2] <- quantile((temp$jDate), 0.10)
+  Melanargia_galatheaYearly[i,3] <- quantile((temp$jDate), 0.90)  
+  Melanargia_galatheaYearly[i,4] <- median(temp$jDate) 
+  Melanargia_galatheaYearly[i,5] <- min(temp$jDate) 
+  Melanargia_galatheaYearly[i,6] <- Melanargia_galatheaYearly[i,3] - Melanargia_galatheaYearly[i,2]
+}
+
+# Merge Melanargia_galatheaYearly with the Melanargia_galathea by year
+Melanargia_galathea <- merge(Melanargia_galathea, Melanargia_galatheaYearly, by="year", all.x=TRUE)
+
+hist(Melanargia_galathea$jDate, xlab = "Julian day", ylab = "Specimen records", main = "Melanargia galathea")
+
+
+Melanargia_galatheaYearly$year <- as.numeric(as.character(Melanargia_galatheaYearly$year))
+
+require(ggplot2)
+ggplot(Melanargia_galatheaYearly, aes(x=year, y=percentile10)) +
+  geom_point() + 
+  geom_smooth(method=lm)
+
+```
+
+ 
+
+#### Anthocharis cardamines (Orange-tip)
+```{r Anthocharis-cardamines}
+Anthocharis_cardamines <- subset(NHMcleanUniVol, species == "Anthocharis cardamines")
+Anthocharis_cardamines$year <- as.factor(as.character(Anthocharis_cardamines$year))
+
+
+# I will remove one obvious outlier (February 1911)
+Anthocharis_cardamines <- subset(Anthocharis_cardamines, month > 2)
+
+# Plot UK outline
+plot_GIS(UK, new.window = FALSE)
+# Add these grid references to an exisiting plot
+plotUK_gr(Anthocharis_cardamines$km10grid, col="red")
+
+Anthocharis_cardaminesYearly <- data.frame(year = as.factor(unique(Anthocharis_cardamines$year)),
+                                  percentile10 = as.numeric(NA),
+                                  percentile90 = as.numeric(NA),
+                                  median = as.numeric(NA),
+                                  earliest = as.numeric(NA),
+                                  CollectionPeriod = as.numeric(NA))
+
+for(i in 1:length(unique(Anthocharis_cardamines$year))){
+  temp <- subset(Anthocharis_cardamines, year == (unique(Anthocharis_cardamines$year)[i]))
+  Anthocharis_cardaminesYearly[i,2] <- quantile((temp$jDate), 0.10)
+  Anthocharis_cardaminesYearly[i,3] <- quantile((temp$jDate), 0.90)  
+  Anthocharis_cardaminesYearly[i,4] <- median(temp$jDate) 
+  Anthocharis_cardaminesYearly[i,5] <- min(temp$jDate) 
+  Anthocharis_cardaminesYearly[i,6] <- Anthocharis_cardaminesYearly[i,3] - Anthocharis_cardaminesYearly[i,2]
+}
+
+# Merge Anthocharis_cardaminesYearly with the Anthocharis_cardamines by year
+Anthocharis_cardamines <- merge(Anthocharis_cardamines, Anthocharis_cardaminesYearly, by="year", all.x=TRUE)
+
+hist(Anthocharis_cardamines$jDate, xlab = "Julian day", ylab = "Specimen records", main = "Anthocharis cardamines")
+
+
+Anthocharis_cardaminesYearly$year <- as.numeric(as.character(Anthocharis_cardaminesYearly$year))
+
+require(ggplot2)
+ggplot(Anthocharis_cardaminesYearly, aes(x=year, y=percentile10)) +
+  geom_point() + 
+  geom_smooth(method=lm)
+```
+
+
+
+#### Favonius quercus (Purple hairstreak)
+```{r Favonius-quercus}
+Favonius_quercus <- subset(NHMcleanUniVol, species == "Favonius quercus")
+Favonius_quercus$year <- as.factor(as.character(Favonius_quercus$year))
+
+# Plot UK outline
+plot_GIS(UK, new.window = FALSE)
+# Add these grid references to an exisiting plot
+plotUK_gr(Favonius_quercus$km10grid, col="red")
+
+Favonius_quercusYearly <- data.frame(year = as.factor(unique(Favonius_quercus$year)),
+                                  percentile10 = as.numeric(NA),
+                                  percentile90 = as.numeric(NA),
+                                  median = as.numeric(NA),
+                                  earliest = as.numeric(NA),
+                                  CollectionPeriod = as.numeric(NA))
+
+for(i in 1:length(unique(Favonius_quercus$year))){
+  temp <- subset(Favonius_quercus, year == (unique(Favonius_quercus$year)[i]))
+  Favonius_quercusYearly[i,2] <- quantile((temp$jDate), 0.10)
+  Favonius_quercusYearly[i,3] <- quantile((temp$jDate), 0.90)  
+  Favonius_quercusYearly[i,4] <- median(temp$jDate) 
+  Favonius_quercusYearly[i,5] <- min(temp$jDate) 
+  Favonius_quercusYearly[i,6] <- Favonius_quercusYearly[i,3] - Favonius_quercusYearly[i,2]
+}
+
+# Merge Favonius_quercusYearly with the Favonius_quercus by year
+Favonius_quercus <- merge(Favonius_quercus, Favonius_quercusYearly, by="year", all.x=TRUE)
+
+hist(Favonius_quercus$jDate, xlab = "Julian day", ylab = "Specimen records", main = "Favonius quercus")
+
+Favonius_quercusYearly$year <- as.numeric(as.character(Favonius_quercusYearly$year))
+
+require(ggplot2)
+ggplot(Favonius_quercusYearly, aes(x=year, y=percentile10)) +
+  geom_point() + 
+  geom_smooth(method=lm)
+```
+
+
+
+#### Aphantopus hyperantus (Ringlet)
+```{r Aphantopus-hyperantus}
+Aphantopus_hyperantus <- subset(NHMcleanUniVol, species == "Aphantopus hyperantus")
+Aphantopus_hyperantus$year <- as.factor(as.character(Aphantopus_hyperantus$year))
+
+
+# I will remove four obvious outliers (January 1924, February 1948, March 1943 amd October 1907)
+Aphantopus_hyperantus <- subset(Aphantopus_hyperantus, month > 3)
+Aphantopus_hyperantus <- subset(Aphantopus_hyperantus, month < 10)
+
+# Plot UK outline
+plot_GIS(UK, new.window = FALSE)
+# Add these grid references to an exisiting plot
+plotUK_gr(Aphantopus_hyperantus$km10grid, col="red")
+
+Aphantopus_hyperantusYearly <- data.frame(year = as.factor(unique(Aphantopus_hyperantus$year)),
+                                  percentile10 = as.numeric(NA),
+                                  percentile90 = as.numeric(NA),
+                                  median = as.numeric(NA),
+                                  earliest = as.numeric(NA),
+                                  CollectionPeriod = as.numeric(NA))
+
+for(i in 1:length(unique(Aphantopus_hyperantus$year))){
+  temp <- subset(Aphantopus_hyperantus, year == (unique(Aphantopus_hyperantus$year)[i]))
+  Aphantopus_hyperantusYearly[i,2] <- quantile((temp$jDate), 0.10)
+  Aphantopus_hyperantusYearly[i,3] <- quantile((temp$jDate), 0.90)  
+  Aphantopus_hyperantusYearly[i,4] <- median(temp$jDate) 
+  Aphantopus_hyperantusYearly[i,5] <- min(temp$jDate) 
+  Aphantopus_hyperantusYearly[i,6] <- Aphantopus_hyperantusYearly[i,3] - Aphantopus_hyperantusYearly[i,2]
+}
+
+# Merge Aphantopus_hyperantusYearly with the Aphantopus_hyperantus by year
+Aphantopus_hyperantus <- merge(Aphantopus_hyperantus, Aphantopus_hyperantusYearly, by="year", all.x=TRUE)
+
+hist(Aphantopus_hyperantus$jDate, xlab = "Julian day", ylab = "Specimen records", main = "Aphantopus hyperantus")
+
+Aphantopus_hyperantusYearly$year <- as.numeric(as.character(Aphantopus_hyperantusYearly$year))
+
+require(ggplot2)
+ggplot(Aphantopus_hyperantusYearly, aes(x=year, y=percentile10)) +
+  geom_point() + 
+  geom_smooth(method=lm)
+
+```
+
+
+
+#### Thymelicus sylvestris (Small skipper)
+```{r Thymelicus-sylvestris}
+Thymelicus_sylvestris <- subset(NHMcleanUniVol, species == "Thymelicus sylvestris")
+Thymelicus_sylvestris$year <- as.factor(as.character(Thymelicus_sylvestris$year))
+
+# I will remove one obvious outlier (November 1947)
+Thymelicus_sylvestris <- subset(Thymelicus_sylvestris, month < 11)
+
+# Plot UK outline
+plot_GIS(UK, new.window = FALSE)
+# Add these grid references to an exisiting plot
+plotUK_gr(Thymelicus_sylvestris$km10grid, col="red")
+
+Thymelicus_sylvestrisYearly <- data.frame(year = as.factor(unique(Thymelicus_sylvestris$year)),
+                                  percentile10 = as.numeric(NA),
+                                  percentile90 = as.numeric(NA),
+                                  median = as.numeric(NA),
+                                  earliest = as.numeric(NA),
+                                  CollectionPeriod = as.numeric(NA))
+
+for(i in 1:length(unique(Thymelicus_sylvestris$year))){
+  temp <- subset(Thymelicus_sylvestris, year == (unique(Thymelicus_sylvestris$year)[i]))
+  Thymelicus_sylvestrisYearly[i,2] <- quantile((temp$jDate), 0.10)
+  Thymelicus_sylvestrisYearly[i,3] <- quantile((temp$jDate), 0.90)  
+  Thymelicus_sylvestrisYearly[i,4] <- median(temp$jDate) 
+  Thymelicus_sylvestrisYearly[i,5] <- min(temp$jDate) 
+  Thymelicus_sylvestrisYearly[i,6] <- Thymelicus_sylvestrisYearly[i,3] - Thymelicus_sylvestrisYearly[i,2]
+}
+
+# Merge Thymelicus_sylvestrisYearly with the Thymelicus_sylvestris by year
+Thymelicus_sylvestris <- merge(Thymelicus_sylvestris, Thymelicus_sylvestrisYearly, by="year", all.x=TRUE)
+
+hist(Thymelicus_sylvestris$jDate, xlab = "Julian day", ylab = "Specimen records", main = "Thymelicus sylvestris")
+
+Thymelicus_sylvestrisYearly$year <- as.numeric(as.character(Thymelicus_sylvestrisYearly$year))
+
+require(ggplot2)
+ggplot(Thymelicus_sylvestrisYearly, aes(x=year, y=percentile10)) +
+  geom_point() + 
+  geom_smooth(method=lm)
+```
+
+
+#### Thymelicus lineola (Essex skipper)
+```{r Thymelicus-lineola}
+Thymelicus_lineola <- subset(NHMcleanUniVol, species == "Thymelicus lineola")
+Thymelicus_lineola$year <- as.factor(as.character(Thymelicus_lineola$year))
+
+# Plot UK outline
+plot_GIS(UK, new.window = FALSE)
+# Add these grid references to an exisiting plot
+plotUK_gr(Thymelicus_lineola$km10grid, col="red")
+
+Thymelicus_lineolaYearly <- data.frame(year = as.factor(unique(Thymelicus_lineola$year)),
+                                  percentile10 = as.numeric(NA),
+                                  percentile90 = as.numeric(NA),
+                                  median = as.numeric(NA),
+                                  earliest = as.numeric(NA),
+                                  CollectionPeriod = as.numeric(NA))
+
+for(i in 1:length(unique(Thymelicus_lineola$year))){
+  temp <- subset(Thymelicus_lineola, year == (unique(Thymelicus_lineola$year)[i]))
+  Thymelicus_lineolaYearly[i,2] <- quantile((temp$jDate), 0.10)
+  Thymelicus_lineolaYearly[i,3] <- quantile((temp$jDate), 0.90)  
+  Thymelicus_lineolaYearly[i,4] <- median(temp$jDate) 
+  Thymelicus_lineolaYearly[i,5] <- min(temp$jDate) 
+  Thymelicus_lineolaYearly[i,6] <- Thymelicus_lineolaYearly[i,3] - Thymelicus_lineolaYearly[i,2]
+}
+
+# Merge Thymelicus_lineolaYearly with the Thymelicus_lineola by year
+Thymelicus_lineola <- merge(Thymelicus_lineola, Thymelicus_lineolaYearly, by="year", all.x=TRUE)
+
+hist(Thymelicus_lineola$jDate, xlab = "Julian day", ylab = "Specimen records", main = "Thymelicus lineola")
+
+Thymelicus_lineolaYearly$year <- as.numeric(as.character(Thymelicus_lineolaYearly$year))
+
+require(ggplot2)
+ggplot(Thymelicus_lineolaYearly, aes(x=year, y=percentile10)) +
+  geom_point() + 
+  geom_smooth(method=lm)
+```
+
+
+
+
+
+
+
+
+
+### Bivoltine species
+
+#### Erynnis tages (dingy skipper)
+```{r erynnis-tages}
 Erynnis_tages <- subset(NHMcleanUniVol, species == "Erynnis tages") # 511 obs
 Erynnis_tages$year <- as.factor(as.character(Erynnis_tages$year))
 
@@ -123,10 +624,10 @@ plot_GIS(UK, new.window = FALSE)
 plotUK_gr(Erynnis_tages$km10grid, col="red")
 
 Erynnis_tagesYearly <- data.frame(year = as.factor(unique(Erynnis_tages$year)),
-                                  qunatile10 = as.numeric(NA),
-                                  qunatile90 = as.numeric(NA),
+                                  percentile10 = as.numeric(NA),
+                                  percentile90 = as.numeric(NA),
                                   median = as.numeric(NA),
-                                  earlies = as.numeric(NA),
+                                  earliest = as.numeric(NA),
                                   CollectionPeriod = as.numeric(NA))
 
 for(i in 1:length(unique(Erynnis_tages$year))){
@@ -141,61 +642,16 @@ for(i in 1:length(unique(Erynnis_tages$year))){
 
 # Merge Erynnis_tagesYearly with the Erynnis_tages by year
 Erynnis_tages <- merge(Erynnis_tages, Erynnis_tagesYearly, by="year", all.x=TRUE)
-                                  
 
 
-#######################################################################
-########################### Maniola jurtina ###########################
-#######################################################################
+Erynnis_tagesYearly$year <- as.numeric(as.character(Erynnis_tagesYearly$year))
 
-Maniola_jurtina <- subset(NHMcleanUniVol, species == "Maniola jurtina")
-Maniola_jurtina$year <- as.factor(as.character(Maniola_jurtina$year))
-
-# Plot UK outline
-plot_GIS(UK, new.window = FALSE)
-# Add these grid references to an exisiting plot
-plotUK_gr(Maniola_jurtina$km10grid, col="red")
-
-Maniola_jurtinaYearly <- data.frame(year = as.factor(unique(Maniola_jurtina$year)),
-                                  qunatile10 = as.numeric(NA),
-                                  qunatile90 = as.numeric(NA),
-                                  median = as.numeric(NA),
-                                  earlies = as.numeric(NA),
-                                  CollectionPeriod = as.numeric(NA))
-
-for(i in 1:length(unique(Maniola_jurtina$year))){
-  temp <- subset(Maniola_jurtina, year == (unique(Maniola_jurtina$year)[i]))
-  Maniola_jurtinaYearly[i,2] <- quantile((temp$jDate), 0.10)
-  Maniola_jurtinaYearly[i,3] <- quantile((temp$jDate), 0.90)  
-  Maniola_jurtinaYearly[i,4] <- median(temp$jDate) 
-  Maniola_jurtinaYearly[i,5] <- min(temp$jDate) 
-  Maniola_jurtinaYearly[i,6] <- Erynnis_tagesYearly[i,3] - Erynnis_tagesYearly[i,2]
-}
-
-# Merge Maniola_jurtinaYearly with the Maniola_jurtina by year
-Maniola_jurtina <- merge(Maniola_jurtina, Maniola_jurtinaYearly, by="year", all.x=TRUE)
-
-
-
-
-
-
-
-
-```
-
-
-
-The relationship between spring temperatures (March–May) and earliest, median, 10th percentile, and 90th percentile collection date, length of collection period (range of 10th to 90th percentiles) and all data in a particular year,
-```{r temporal-spread-raw}
 require(ggplot2)
-p <- ggplot((NHMcleanUniVol %>%
-    group_by(species, year) %>%
-    tally()), aes(year, n)) + geom_point() +
-    facet_grid(rows = vars(species))
-p
+ggplot(Erynnis_tagesYearly, aes(x=year, y=percentile10)) +
+  geom_point() + 
+  geom_smooth(method=lm)
 
+ggplot(Erynnis_tagesYearly, aes(x=year, y=earliest)) +
+  geom_point() + 
+  geom_smooth(method=lm)
 ```
-
-
-
